@@ -6,6 +6,7 @@ let tokenCache = {
   accessToken: null,
   expiresAt: 0,
 };
+console.log(rawPayload.toString("utf8"));
 
 const normalizePath = (path) => {
   return path.startsWith("/") ? path : `/${path}`;
@@ -293,6 +294,19 @@ const safeCompare = (expected, received) => {
 };
 
 const verifyWebhookSignature = (payload, signature) => {
+  console.log("========== WEBHOOK DEBUG ==========");
+  console.log("Secret:", env.nomba.webhookSecret);
+
+  console.log("Received Signature:");
+  console.log(signature);
+
+  console.log("Expected HEX:");
+  console.log(expectedSignature);
+
+  console.log("Expected BASE64:");
+  console.log(expectedBase64Signature);
+
+  console.log("===================================");
   if (!env.nomba.webhookSecret || !signature) {
     return false;
   }
