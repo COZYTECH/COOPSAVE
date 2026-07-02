@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  provider VARCHAR(50) NOT NULL,
+  event_type VARCHAR(100) NOT NULL,
+  event_id VARCHAR(150) NULL,
+  account_ref VARCHAR(100) NULL,
+  transaction_reference VARCHAR(150) NULL,
+  processing_status ENUM('PENDING', 'PROCESSING', 'PROCESSED', 'FAILED') NOT NULL DEFAULT 'PENDING',
+  received_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  raw_payload JSON NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_webhook_events_provider_event_id (provider, event_id),
+  UNIQUE KEY uq_webhook_events_provider_transaction_reference (provider, transaction_reference),
+  KEY idx_webhook_events_provider (provider),
+  KEY idx_webhook_events_event_type (event_type),
+  KEY idx_webhook_events_account_ref (account_ref),
+  KEY idx_webhook_events_processing_status (processing_status),
+  KEY idx_webhook_events_received_at (received_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
