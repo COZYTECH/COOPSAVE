@@ -6,7 +6,6 @@ let tokenCache = {
   accessToken: null,
   expiresAt: 0,
 };
-console.log(rawPayload.toString("utf8"));
 
 const normalizePath = (path) => {
   return path.startsWith("/") ? path : `/${path}`;
@@ -259,7 +258,7 @@ const getTransactions = async (params = {}) => {
 
   return response.data;
 };
-
+console.log(rawPayload.toString("utf8"));
 const toWebhookPayloadString = (payload) => {
   if (Buffer.isBuffer(payload)) {
     return payload.toString("utf8");
@@ -294,6 +293,17 @@ const safeCompare = (expected, received) => {
 };
 
 const verifyWebhookSignature = (payload, signature) => {
+  if (!env.nomba.webhookSecret || !signature) {
+    return false;
+  }
+
+  const payloadString = toWebhookPayloadString(payload);
+  const expectedSignature = crypto
+    .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
+    .update(payloadString)
+    .digest("hex");
+
+  const receivedSignature = normalizeSignature(signature);
   console.log("========== WEBHOOK DEBUG ==========");
   console.log("Secret:", env.nomba.webhookSecret);
 
@@ -307,17 +317,6 @@ const verifyWebhookSignature = (payload, signature) => {
   console.log(expectedBase64Signature);
 
   console.log("===================================");
-  if (!env.nomba.webhookSecret || !signature) {
-    return false;
-  }
-
-  const payloadString = toWebhookPayloadString(payload);
-  const expectedSignature = crypto
-    .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
-    .update(payloadString)
-    .digest("hex");
-
-  const receivedSignature = normalizeSignature(signature);
   const expectedBase64Signature = crypto
     .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
     .update(payloadString)
