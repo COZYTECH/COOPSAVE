@@ -292,17 +292,6 @@ const safeCompare = (expected, received) => {
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 };
 
-console.log("===== RAW PAYLOAD =====");
-
-if (Buffer.isBuffer(rawPayload)) {
-  console.log(rawPayload.toString("utf8"));
-} else {
-  console.log(JSON.stringify(rawPayload, null, 2));
-}
-
-console.log("===== RECEIVED SIGNATURE =====");
-console.log(signature);
-
 const verifyWebhookSignature = (payload, signature) => {
   if (!env.nomba.webhookSecret || !signature) {
     return false;
@@ -320,6 +309,9 @@ const verifyWebhookSignature = (payload, signature) => {
 
   console.log("Received Signature:");
   console.log(signature);
+
+  console.log("Payload:");
+  console.log(payloadString);
 
   console.log("Expected HEX:");
   console.log(expectedSignature);
