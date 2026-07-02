@@ -292,42 +292,93 @@ const safeCompare = (expected, received) => {
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 };
 
+// const verifyWebhookSignature = (payload, signature) => {
+//   if (!env.nomba.webhookSecret || !signature) {
+//     return false;
+//   }
+
+//   const payloadString = toWebhookPayloadString(payload);
+//   const expectedSignature = crypto
+//     .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
+//     .update(payloadString)
+//     .digest("hex");
+
+//   const receivedSignature = normalizeSignature(signature);
+//   console.log("========== WEBHOOK DEBUG ==========");
+//   console.log("Secret:", env.nomba.webhookSecret);
+
+//   console.log("Received Signature:");
+//   console.log(signature);
+
+//   console.log("Payload:");
+//   console.log(payloadString);
+
+//   console.log("Expected HEX:");
+//   console.log(expectedSignature);
+
+//   console.log("Expected BASE64:");
+//   console.log(expectedBase64Signature);
+
+//   console.log("===================================");
+//   const expectedBase64Signature = crypto
+//     .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
+//     .update(payloadString)
+//     .digest("base64");
+
+//   return (
+//     safeCompare(expectedSignature, receivedSignature) ||
+//     safeCompare(expectedBase64Signature, receivedSignature)
+//   );
+// };
 const verifyWebhookSignature = (payload, signature) => {
-  if (!env.nomba.webhookSecret || !signature) {
-    return false;
+  console.log("========== WEBHOOK DEBUG ==========");
+
+  console.log("Webhook Secret:");
+  console.log(env.nomba.webhookSecret);
+
+  console.log("\nReceived Header:");
+  console.log(signature);
+
+  console.log("\nPayload Type:");
+  console.log(Buffer.isBuffer(payload) ? "Buffer" : typeof payload);
+
+  console.log("\nRaw Payload:");
+
+  if (Buffer.isBuffer(payload)) {
+    console.log(payload.toString("utf8"));
+  } else {
+    console.log(JSON.stringify(payload));
   }
 
   const payloadString = toWebhookPayloadString(payload);
-  const expectedSignature = crypto
+
+  const expectedHex = crypto
     .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
     .update(payloadString)
     .digest("hex");
 
-  const receivedSignature = normalizeSignature(signature);
-  console.log("========== WEBHOOK DEBUG ==========");
-  console.log("Secret:", env.nomba.webhookSecret);
-
-  console.log("Received Signature:");
-  console.log(signature);
-
-  console.log("Payload:");
-  console.log(payloadString);
-
-  console.log("Expected HEX:");
-  console.log(expectedSignature);
-
-  console.log("Expected BASE64:");
-  console.log(expectedBase64Signature);
-
-  console.log("===================================");
-  const expectedBase64Signature = crypto
+  const expectedBase64 = crypto
     .createHmac(env.nomba.webhookSignatureAlgorithm, env.nomba.webhookSecret)
     .update(payloadString)
     .digest("base64");
 
+  console.log("\nExpected HEX:");
+  console.log(expectedHex);
+
+  console.log("\nExpected BASE64:");
+  console.log(expectedBase64);
+
+  console.log("===================================");
+
+  if (!env.nomba.webhookSecret || !signature) {
+    return false;
+  }
+
+  const receivedSignature = normalizeSignature(signature);
+
   return (
-    safeCompare(expectedSignature, receivedSignature) ||
-    safeCompare(expectedBase64Signature, receivedSignature)
+    safeCompare(expectedHex, receivedSignature) ||
+    safeCompare(expectedBase64, receivedSignature)
   );
 };
 
