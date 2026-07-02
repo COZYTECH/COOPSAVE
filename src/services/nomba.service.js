@@ -258,7 +258,7 @@ const getTransactions = async (params = {}) => {
 
   return response.data;
 };
-console.log(rawPayload.toString("utf8"));
+
 const toWebhookPayloadString = (payload) => {
   if (Buffer.isBuffer(payload)) {
     return payload.toString("utf8");
@@ -291,6 +291,17 @@ const safeCompare = (expected, received) => {
 
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 };
+
+console.log("===== RAW PAYLOAD =====");
+
+if (Buffer.isBuffer(rawPayload)) {
+  console.log(rawPayload.toString("utf8"));
+} else {
+  console.log(JSON.stringify(rawPayload, null, 2));
+}
+
+console.log("===== RECEIVED SIGNATURE =====");
+console.log(signature);
 
 const verifyWebhookSignature = (payload, signature) => {
   if (!env.nomba.webhookSecret || !signature) {
