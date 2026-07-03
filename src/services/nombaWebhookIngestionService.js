@@ -255,6 +255,7 @@ const ingestNombaWebhook = async ({ rawPayload, signature }) => {
     transactionReference: webhookEvent.transactionReference,
   });
 
+  const { pool } = require("../config/database");
   const duplicateEvent = await webhookEventRepository.findDuplicate({
     provider: PROVIDER,
     eventId: webhookEvent.eventId,
