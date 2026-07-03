@@ -226,6 +226,18 @@ const getNombaSignature = (headers) => {
   );
 };
 
+const { pool } = require("../config/database");
+
+const [db] = await pool.query("SELECT DATABASE() AS db");
+console.log("CONNECTED DB:", db[0].db);
+
+const [tables] = await pool.query("SHOW TABLES");
+console.log("TABLES:", tables);
+
+const [count] = await pool.query(
+  "SELECT COUNT(*) AS total FROM webhook_events",
+);
+console.log("WEBHOOK_EVENTS COUNT:", count[0].total);
 const ingestNombaWebhook = async ({ rawPayload, signature }) => {
   logWebhookEvent("nomba.webhook.received", {
     signaturePresent: Boolean(signature),
