@@ -1,5 +1,14 @@
 const { pool } = require('../config/database');
 
+const contributionColumns = `
+  id,
+  member_id,
+  total_amount,
+  last_transaction_id,
+  created_at,
+  updated_at
+`;
+
 const addContribution = async ({ memberId, amount, transactionId }, db = pool) => {
   await db.execute(
     `
@@ -12,6 +21,22 @@ const addContribution = async ({ memberId, amount, transactionId }, db = pool) =
     `,
     { memberId, amount, transactionId }
   );
+
+  return findByMemberId(memberId, db);
+};
+
+const findByMemberId = async (memberId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT ${contributionColumns}
+      FROM contributions
+      WHERE member_id = :memberId
+      LIMIT 1
+    `,
+    { memberId }
+  );
+
+  return rows[0] || null;
 };
 
 const findAllByOwnerId = async (ownerId, db = pool) => {
@@ -41,5 +66,6 @@ const findAllByOwnerId = async (ownerId, db = pool) => {
 
 module.exports = {
   addContribution,
+  findByMemberId,
   findAllByOwnerId
 };

@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_transactions_request_id (request_id),
+  UNIQUE KEY uq_transactions_transaction_id (transaction_id),
   KEY idx_transactions_transaction_id (transaction_id),
   KEY idx_transactions_member_id (member_id),
   CONSTRAINT fk_transactions_member

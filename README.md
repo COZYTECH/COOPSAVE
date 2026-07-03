@@ -134,9 +134,11 @@ nomba-signature: <signature>
 ```
 
 Valid Nomba webhook deliveries are verified, validated, deduplicated by
-`event_id` or `transaction_reference`, and stored with
-`processing_status = PENDING`. This endpoint only ingests events; it does not
-update balances or run reconciliation.
+`event_id` or `transaction_reference`, and stored in `webhook_events`.
+`payment_success` events are delegated to `PaymentProcessingService`, which
+creates the transaction, updates the member contribution balance, and emits
+`payment.received` after commit. Reconciliation is not performed by this
+endpoint.
 
 Create cooperative:
 

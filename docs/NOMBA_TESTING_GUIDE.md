@@ -72,6 +72,7 @@ Key files:
 - `src/services/providers/sandboxVirtualAccountProvider.js`
 - `src/repositories/virtualAccountRepository.js`
 - `src/services/nombaWebhookIngestionService.js`
+- `src/services/paymentProcessingService.js`
 - `src/repositories/webhookEventRepository.js`
 
 ## 2. Authentication
@@ -535,9 +536,9 @@ virtualAccountRepository.create()
 
 Purpose:
 
-Receive Nomba webhooks, verify `nomba-signature`, validate the payload shape, prevent duplicate ingestion, and persist the raw payload in `webhook_events` with `processing_status = PENDING`.
+Receive Nomba webhooks, verify `nomba-signature`, validate the payload shape, prevent duplicate ingestion, and persist the raw payload in `webhook_events`.
 
-This endpoint is ingestion-only. It does not create transactions, update contributions, run reconciliation, or emit payment events.
+For `payment_success` events, the webhook service delegates payment handling to `PaymentProcessingService`. Payment processing creates the transaction, updates the contribution balance atomically, and emits `payment.received` after commit. This endpoint still does not run reconciliation.
 
 Authentication:
 
@@ -848,9 +849,12 @@ nomba-signature: <signature>
 Expected database changes:
 
 - `webhook_events` receives one row.
-- `processing_status` is `PENDING`.
-- Duplicate deliveries with the same `event_id` or `transaction_reference` return `200 OK` and do not create another row.
-- No `transactions`, `contributions`, or reconciliation rows are changed in this phase.
+- `processing_status` starts as `PENDING` and becomes `PROCESSED` after successful payment handling.
+- `transactions` receives one row for `payment_success`.
+- `contributions` inserts or updates the member running balance and links `last_transaction_id`.
+- Duplicate webhook deliveries with the same `event_id` or `transaction_reference` return `200 OK` and do not process another payment.
+- Duplicate payment transactions with the same `transaction_reference` return a duplicate payment result without creating another transaction.
+- Reconciliation rows are not changed in this phase.
 
 Check MySQL:
 

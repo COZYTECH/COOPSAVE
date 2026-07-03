@@ -92,6 +92,20 @@ const findByRequestId = async (requestId, db = pool) => {
   return rows[0] || null;
 };
 
+const findByTransactionReference = async (transactionReference, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT ${transactionColumns}
+      FROM transactions
+      WHERE transaction_id = :transactionReference
+      LIMIT 1
+    `,
+    { transactionReference }
+  );
+
+  return rows[0] || null;
+};
+
 const findAllByOwnerId = async (ownerId, db = pool) => {
   const [rows] = await db.execute(
     `
@@ -125,5 +139,6 @@ module.exports = {
   create,
   findById,
   findByRequestId,
+  findByTransactionReference,
   findAllByOwnerId
 };

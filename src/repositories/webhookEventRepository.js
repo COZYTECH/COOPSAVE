@@ -111,8 +111,22 @@ const create = async (
   return findById(result.insertId, db);
 };
 
+const updateProcessingStatus = async (id, processingStatus, db = pool) => {
+  await db.execute(
+    `
+      UPDATE webhook_events
+      SET processing_status = :processingStatus
+      WHERE id = :id
+    `,
+    { id, processingStatus }
+  );
+
+  return findById(id, db);
+};
+
 module.exports = {
   findById,
   findDuplicate,
-  create
+  create,
+  updateProcessingStatus
 };

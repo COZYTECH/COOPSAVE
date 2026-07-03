@@ -69,6 +69,7 @@ const emitPaymentReceived = (ownerId, payload) => {
     return;
   }
 
+  io.to(userRoom(ownerId)).emit('payment.received', payload);
   io.to(userRoom(ownerId)).emit('payment_received', payload);
 };
 
