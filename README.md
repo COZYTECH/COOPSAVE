@@ -21,9 +21,11 @@ cp .env.example .env
 3. Create the database tables and apply migrations:
 
 ```bash
-npm run db:schema
-npm run db:migrate
+npm run migrate
 ```
+
+The migration runner reads either `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD`/`DB_NAME`
+or a Railway-style `DATABASE_URL` / `MYSQL_URL`.
 
 4. Start the API:
 
@@ -34,7 +36,20 @@ npm run dev
 For production:
 
 ```bash
+npm run migrate
 npm start
+```
+
+On Railway, set your MySQL connection environment variables, then run:
+
+```bash
+npm run migrate
+```
+
+Rollback support is available for the most recently applied migration:
+
+```bash
+npm run migrate:rollback
 ```
 
 ## Frontend Setup

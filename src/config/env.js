@@ -9,15 +9,35 @@ const parseCsv = (value) => {
     .filter(Boolean);
 };
 
+const parseDatabaseUrl = (value) => {
+  if (!value) {
+    return {};
+  }
+
+  const parsedUrl = new URL(value);
+
+  return {
+    host: parsedUrl.hostname || undefined,
+    port: parsedUrl.port ? Number(parsedUrl.port) : undefined,
+    user: decodeURIComponent(parsedUrl.username || ""),
+    password: decodeURIComponent(parsedUrl.password || ""),
+    name: parsedUrl.pathname ? parsedUrl.pathname.replace(/^\//, "") : undefined,
+  };
+};
+
+const databaseUrlConfig = parseDatabaseUrl(
+  process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL,
+);
+
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 5000),
   database: {
-    host: process.env.DB_HOST || "127.0.0.1",
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    name: process.env.DB_NAME || "coopsave",
+    host: process.env.DB_HOST || databaseUrlConfig.host || "127.0.0.1",
+    port: Number(process.env.DB_PORT || databaseUrlConfig.port || 3306),
+    user: process.env.DB_USER || databaseUrlConfig.user || "root",
+    password: process.env.DB_PASSWORD || databaseUrlConfig.password || "",
+    name: process.env.DB_NAME || databaseUrlConfig.name || "coopsave",
     connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
   },
   jwt: {
