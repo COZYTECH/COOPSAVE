@@ -176,3 +176,20 @@ Create member:
 ```
 link to the website https://coopsave-snowy.vercel.app/
 link to the back end hosted using rail https://coopsave-production.up.railway.app
+
+images:
+
+<img width="1918" height="907" alt="Screenshot 2026-07-07 124803" src="https://github.com/user-attachments/assets/d265c535-b855-4935-a06e-07a22cc0f64e" />
+<img width="1919" height="907" alt="Screenshot 2026-07-07 124827" src="https://github.com/user-attachments/assets/9268e8f9-35f6-449f-bf39-f3be37f079a4" />
+<img width="1919" height="908" alt="Screenshot 2026-07-07 124903" src="https://github.com/user-attachments/assets/8f25c5d1-b28d-4ff8-bdb3-d26e1aded625" />
+<img width="1915" height="915" alt="Screenshot 2026-07-07 124846" src="https://github.com/user-attachments/assets/d887fc0b-b5cc-4e42-bed7-23f2a31c734a" />
+<img width="1919" height="912" alt="Screenshot 2026-07-07 124918" src="https://github.com/user-attachments/assets/9a574cf3-1fd9-403b-8f96-241416570026" />
+
+
+
+
+
+
+
+
+
