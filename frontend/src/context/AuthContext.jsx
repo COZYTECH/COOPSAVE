@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../services/authApi';
 import { authStorage } from '../lib/storage';
+import { disconnectSockets } from '../lib/socket';
 
 const AuthContext = createContext(null);
 
@@ -11,6 +12,7 @@ export const AuthProvider = ({ children }) => {
 
   const clearSession = useCallback(() => {
     authStorage.clear();
+    disconnectSockets();
     setToken(null);
     setUser(null);
   }, []);
@@ -39,7 +41,19 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(() => {
     clearSession();
+    window.location.assign('/login');
   }, [clearSession]);
+
+  const refreshCurrentUser = useCallback(async () => {
+    if (!token) {
+      return null;
+    }
+
+    const currentUser = await authApi.currentUser();
+    authStorage.setUser(currentUser);
+    setUser(currentUser);
+    return currentUser;
+  }, [token]);
 
   useEffect(() => {
     if (!token) {
@@ -88,9 +102,10 @@ export const AuthProvider = ({ children }) => {
       bootstrapping,
       login,
       register,
+      refreshCurrentUser,
       logout
     }),
-    [bootstrapping, login, logout, register, token, user]
+    [bootstrapping, login, logout, refreshCurrentUser, register, token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

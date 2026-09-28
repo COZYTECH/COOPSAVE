@@ -1,8 +1,7 @@
 const { pool } = require('../config/database');
 const cooperativeRepository = require('../repositories/cooperativeRepository');
 const memberRepository = require('../repositories/memberRepository');
-const virtualAccountRepository = require('../repositories/virtualAccountRepository');
-const virtualAccountProvider = require('./virtualAccountProvider');
+const groupMembershipRepository = require('../repositories/groupMembershipRepository');
 const AppError = require('../utils/appError');
 const { toMember } = require('../models/memberModel');
 
@@ -13,8 +12,8 @@ const normalizeMemberPayload = (payload) => ({
   phone: payload.phone
 });
 
-const assertOwnsCooperative = async (cooperativeId, ownerId, db) => {
-  const cooperative = await cooperativeRepository.findByIdAndOwnerId(
+const assertCanManageCooperative = async (cooperativeId, ownerId, db) => {
+  const cooperative = await cooperativeRepository.findByIdAndManagerId(
     cooperativeId,
     ownerId,
     db
@@ -63,43 +62,22 @@ const assertUniqueMemberIdentity = async ({
 const createMember = async (payload, ownerId) => {
   const memberData = normalizeMemberPayload(payload);
   const connection = await pool.getConnection();
-  let reservedAccount = null;
 
   try {
-    // Member creation owns this business transaction because it spans multiple
-    // domain steps: cooperative validation, account reservation, member insert,
-    // and final account assignment.
+    // This legacy directory write is intentionally separate from the new
+    // membership-scoped Flutterwave payment identity flow.
     await connection.beginTransaction();
 
-    await assertOwnsCooperative(memberData.cooperativeId, ownerId, connection);
+    await assertCanManageCooperative(memberData.cooperativeId, ownerId, connection);
     await assertUniqueMemberIdentity(memberData, connection);
-
-    reservedAccount = await virtualAccountProvider.allocateAccount(
-      memberData,
-      connection
-    );
-
-    await assertUniqueMemberIdentity(
-      {
-        ...memberData,
-        accountRef: reservedAccount.accountRef
-      },
-      connection
-    );
 
     const member = await memberRepository.create(
       {
         ...memberData,
-        accountRef: reservedAccount.accountRef,
-        accountNumber: reservedAccount.accountNumber,
-        accountName: reservedAccount.accountName
+        accountRef: null,
+        accountNumber: null,
+        accountName: null
       },
-      connection
-    );
-
-    await virtualAccountRepository.assignAccount(
-      reservedAccount.id,
-      member.id,
       connection
     );
 
@@ -113,14 +91,6 @@ const createMember = async (payload, ownerId) => {
       console.error(rollbackError);
     }
 
-    if (reservedAccount) {
-      try {
-        await virtualAccountRepository.releaseAccount(reservedAccount.id);
-      } catch (releaseError) {
-        console.error(releaseError);
-      }
-    }
-
     throw error;
   } finally {
     connection.release();
@@ -128,12 +98,40 @@ const createMember = async (payload, ownerId) => {
 };
 
 const getMembers = async (ownerId) => {
-  const members = await memberRepository.findAllByOwnerId(ownerId);
+  const members = await memberRepository.findAllByManagerId(ownerId);
   return members.map(toMember);
 };
 
+const getMembersForCooperative = async (cooperativeId, userId) => {
+  const cooperative = await cooperativeRepository.findByIdAndManagerId(
+    cooperativeId,
+    userId
+  );
+
+  if (!cooperative) {
+    throw new AppError('Cooperative not found.', 404);
+  }
+
+  const memberships = await groupMembershipRepository.findAllByCooperativeId(
+    cooperativeId
+  );
+
+  return memberships.map((membership) => ({
+    id: membership.id,
+    cooperativeId: membership.cooperative_id,
+    fullName: membership.full_name,
+    email: membership.email,
+    phone: null,
+    accountRef: null,
+    accountNumber: null,
+    accountName: null,
+    role: membership.role,
+    createdAt: membership.created_at
+  }));
+};
+
 const getMemberById = async (id, ownerId) => {
-  const member = await memberRepository.findByIdAndOwnerId(id, ownerId);
+  const member = await memberRepository.findByIdAndManagerId(id, ownerId);
 
   if (!member) {
     throw new AppError('Member not found.', 404);
@@ -143,7 +141,7 @@ const getMemberById = async (id, ownerId) => {
 };
 
 const updateMember = async (id, payload, ownerId) => {
-  const existingMember = await memberRepository.findByIdAndOwnerId(id, ownerId);
+  const existingMember = await memberRepository.findByIdAndManagerId(id, ownerId);
 
   if (!existingMember) {
     throw new AppError('Member not found.', 404);
@@ -155,7 +153,7 @@ const updateMember = async (id, payload, ownerId) => {
       ? requestedData.cooperativeId
       : existingMember.cooperative_id;
 
-  await assertOwnsCooperative(cooperativeId, ownerId);
+  await assertCanManageCooperative(cooperativeId, ownerId);
 
   const memberData = {
     cooperativeId,
@@ -184,7 +182,7 @@ const updateMember = async (id, payload, ownerId) => {
 };
 
 const deleteMember = async (id, ownerId) => {
-  const member = await memberRepository.findByIdAndOwnerId(id, ownerId);
+  const member = await memberRepository.findByIdAndManagerId(id, ownerId);
 
   if (!member) {
     throw new AppError('Member not found.', 404);
@@ -196,6 +194,7 @@ const deleteMember = async (id, ownerId) => {
 module.exports = {
   createMember,
   getMembers,
+  getMembersForCooperative,
   getMemberById,
   updateMember,
   deleteMember

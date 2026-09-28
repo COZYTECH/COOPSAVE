@@ -158,12 +158,6 @@ const getVirtualAccount = async (virtualAccountId, params = {}) => {
 };
 
 const listVirtualAccounts = async (payload = {}) => {
-  console.log("BASE URL:", env.nomba.baseUrl);
-  console.log("LIST PATH:", env.nomba.virtualAccountsListPath);
-  console.log(
-    "FULL URL:",
-    `${env.nomba.baseUrl}${env.nomba.virtualAccountsListPath}`,
-  );
   const response = await nombaClient.post(
     normalizePath(
       env.NOMBA_VIRTUAL_ACCOUNTS_LIST_PATH || "v1/accounts/virtual/list",
@@ -173,10 +167,8 @@ const listVirtualAccounts = async (payload = {}) => {
       headers: await buildAuthenticatedHeaders(),
     },
   );
-  console.log("========== Nomba List Response ==========");
-
-  console.dir(response.data, {
-    depth: null,
+  logNombaEvent('info', 'nomba.virtual_accounts.list.completed', {
+    accountCount: extractVirtualAccounts(response.data).length
   });
 
   return response.data;

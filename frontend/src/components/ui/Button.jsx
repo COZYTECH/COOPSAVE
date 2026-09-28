@@ -1,10 +1,10 @@
 import { Loader2 } from 'lucide-react';
 
 const variants = {
-  primary: 'bg-moss text-white hover:bg-moss/90',
-  secondary: 'border border-ink/10 bg-white text-ink hover:bg-ink/5',
-  danger: 'border border-clay/25 bg-clay/10 text-clay hover:bg-clay/15',
-  ghost: 'text-ink/70 hover:bg-ink/5 hover:text-ink'
+  primary: 'bg-pamoja-forest text-white hover:bg-pamoja-forest-deep',
+  secondary: 'border border-pamoja-forest/12 bg-white text-pamoja-forest hover:bg-pamoja-sage',
+  danger: 'border border-red-700/20 bg-red-50 text-red-800 hover:bg-red-100',
+  ghost: 'text-pamoja-body hover:bg-pamoja-sage hover:text-pamoja-forest'
 };
 
 export const Button = ({
@@ -20,7 +20,7 @@ export const Button = ({
       type={type}
       disabled={loading || props.disabled}
       className={[
-        'inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition disabled:opacity-60',
+        'pamoja-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition disabled:opacity-60 sm:min-h-12',
         variants[variant],
         className
       ].join(' ')}

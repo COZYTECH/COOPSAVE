@@ -22,6 +22,29 @@ const registerValidator = [
     .withMessage('Password must include an uppercase letter.')
     .matches(/[0-9]/)
     .withMessage('Password must include a number.'),
+  body('intent')
+    .optional()
+    .isIn(['CREATE_AJO', 'JOIN_AJO'])
+    .withMessage('Registration path must be CREATE_AJO or JOIN_AJO.'),
+  body('group_name')
+    .if((value, { req }) => req.body.intent === 'CREATE_AJO')
+    .trim()
+    .notEmpty()
+    .withMessage('Ajo name is required when creating an Ajo.')
+    .isLength({ min: 2, max: 150 })
+    .withMessage('Ajo name must be between 2 and 150 characters.'),
+  body('group_description')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 2000 })
+    .withMessage('Ajo description must not exceed 2000 characters.'),
+  body('invite_code')
+    .if((value, { req }) => req.body.intent === 'JOIN_AJO')
+    .trim()
+    .notEmpty()
+    .withMessage('An invitation code is required when joining an Ajo.')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('Invitation code is invalid.'),
   validateRequest
 ];
 

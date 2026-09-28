@@ -71,6 +71,42 @@ const findAllByOwnerId = async (ownerId) => {
   return rows;
 };
 
+// Return member records for groups the user can manage.
+const findAllByManagerId = async (userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT DISTINCT ${memberColumns}
+      FROM members m
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE c.owner_id = :userId OR gm.role = 'GROUP_ADMIN'
+      ORDER BY m.created_at DESC
+    `,
+    { userId }
+  );
+
+  return rows;
+};
+
+const findAllByManagerIdAndCooperativeId = async (userId, cooperativeId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT DISTINCT ${memberColumns}
+      FROM members m
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE m.cooperative_id = :cooperativeId
+        AND (c.owner_id = :userId OR gm.role = 'GROUP_ADMIN')
+      ORDER BY m.created_at DESC
+    `,
+    { userId, cooperativeId }
+  );
+
+  return rows;
+};
+
 const findById = async (id, db = pool) => {
   const [rows] = await db.execute(
     `
@@ -95,6 +131,25 @@ const findByIdAndOwnerId = async (id, ownerId) => {
       LIMIT 1
     `,
     { id, ownerId }
+  );
+
+  return rows[0] || null;
+};
+
+// A member record is only visible to a group owner or group administrator.
+const findByIdAndManagerId = async (id, userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT DISTINCT ${memberColumns}
+      FROM members m
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE m.id = :id
+        AND (c.owner_id = :userId OR gm.role = 'GROUP_ADMIN')
+      LIMIT 1
+    `,
+    { id, userId }
   );
 
   return rows[0] || null;
@@ -198,8 +253,11 @@ const deleteById = async (id) => {
 module.exports = {
   create,
   findAllByOwnerId,
+  findAllByManagerId,
+  findAllByManagerIdAndCooperativeId,
   findById,
   findByIdAndOwnerId,
+  findByIdAndManagerId,
   findByEmailInCooperative,
   findByAccountRef,
   findAssignedAccountRefs,

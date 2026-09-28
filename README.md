@@ -78,19 +78,27 @@ Realtime payment updates use Socket.IO at `VITE_SOCKET_URL`, which defaults to `
 
 First-time users should open `/register` to create an owner account, then sign in at `/login`.
 
-## Nomba Integration
+## Flutterwave Phase 1
 
-Nomba credentials and endpoint paths are loaded from environment variables. Set these before using `src/services/nomba.service.js`:
+Flutterwave is the active provider boundary for new payment identities. Phase 1
+is test-mode only and keeps the secret key on the backend:
 
 ```bash
-NOMBA_BASE_URL=
-NOMBA_ACCOUNT_ID=
-NOMBA_CLIENT_ID=
-NOMBA_CLIENT_SECRET=
-NOMBA_WEBHOOK_SECRET=
+FLUTTERWAVE_SECRET_KEY=
+FLUTTERWAVE_PUBLIC_KEY=
+FLUTTERWAVE_WEBHOOK_SECRET=
+FLUTTERWAVE_BASE_URL=https://api.flutterwave.com/v3
+FLUTTERWAVE_MODE=test
+FLUTTERWAVE_TRANSFERS_PATH=/transfers
+FLUTTERWAVE_BANKS_PATH=/banks
+FLUTTERWAVE_RESOLVE_ACCOUNT_PATH=/accounts/resolve
+PAYOUT_BANK_ENCRYPTION_KEY=<long-random-secret>
 ```
 
-The integration currently exposes reusable provider methods only; it is not connected to CoopSave business workflows yet.
+New payment identities belong to `cooperative_memberships`, not the legacy
+`members` table. See `docs/PAYMENT_IDENTITY_PHASE1.md` for the lifecycle,
+webhook behavior, and provider model. Existing Nomba records remain historical;
+Nomba sync and webhook routes are no longer registered.
 
 ## Endpoints
 
@@ -105,7 +113,26 @@ The integration currently exposes reusable provider methods only; it is not conn
 - `GET /api/members/:id` - get a member from an owned cooperative
 - `PUT /api/members/:id` - update a member from an owned cooperative
 - `DELETE /api/members/:id` - delete a member from an owned cooperative
-- `POST /api/webhooks/nomba` - ingest Nomba webhooks into `webhook_events`
+- `POST /api/webhooks/flutterwave` - verify and persist Flutterwave webhook events
+- `GET /api/groups/:groupId/payment-identity` - view the current user's Ajo-scoped payment identity
+- `POST /api/groups/:groupId/payment-identity/provision` - retry the current user's failed identity provisioning
+- `GET /api/groups/:groupId/manage/payment-identities` - group-admin view of identities in one Ajo
+- `GET /api/groups/:groupId/cycles` - list cycles visible to an Ajo member
+- `POST /api/groups/:groupId/cycles` - create a draft cycle as a group admin
+- `POST /api/groups/:groupId/cycles/:cycleId/start` - create obligations and activate a cycle
+- `GET /api/groups/:groupId/obligations` - group-admin obligation view
+- `GET /api/groups/:groupId/transactions` - group-admin normalized payment transactions
+- `GET /api/me/ajo-contributions/:groupId` - member-scoped obligations
+- `GET /api/me/ajo-contributions/:groupId/transactions` - member-scoped payment transactions
+- `GET /api/admin/payment-identities` - platform-admin identity directory
+- `GET /api/admin/payment-transactions` - platform-admin normalized transaction directory
+- `GET /api/admin/payouts` - platform-admin payout directory
+- `GET /api/banks?country=NG` - Flutterwave test-mode bank directory
+- `POST /api/groups/:groupId/bank-accounts/verify` - verify a recipient bank account
+- `GET /api/groups/:groupId/cycles/:cycleId/payout-eligibility` - evaluate payout eligibility
+- `POST /api/groups/:groupId/cycles/:cycleId/payouts` - initiate an eligible test payout
+- `GET /api/groups/:groupId/payouts` - group payout directory
+- `GET /api/me/ajo-payouts/:groupId` - member payout history
 - `GET /api/reconciliation` - return matched, missing, and failed transaction buckets
 - `POST /api/v1/auth/register` - register a user
 - `POST /api/v1/auth/login` - log in a user
@@ -140,20 +167,21 @@ Authenticated requests should include:
 Authorization: Bearer <token>
 ```
 
-Nomba webhook ingestion:
+Flutterwave webhook ingestion:
 
 ```http
-POST /api/webhooks/nomba
+POST /api/webhooks/flutterwave
 Content-Type: application/json
-nomba-signature: <signature>
+verif-hash: <configured_flutterwave_webhook_secret>
 ```
 
-Valid Nomba webhook deliveries are verified, validated, deduplicated by
-`event_id` or `transaction_reference`, and stored in `webhook_events`.
-`payment_success` events are delegated to `PaymentProcessingService`, which
-creates the transaction, updates the member contribution balance, and emits
-`payment.received` after commit. Reconciliation is not performed by this
-endpoint.
+Valid Flutterwave deliveries are verified, validated, deduplicated by
+`event_id` or transaction reference, and persisted before the endpoint returns.
+Known payment identities are resolved only through provider account/reference
+fields. Verified payments are allocated atomically to the identity's active
+cycle obligation and recorded in the append-only ledger. Unknown payments and
+payments without an active obligation are marked `RECONCILIATION_REQUIRED`;
+this phase does not implement payouts or refunds.
 
 Create cooperative:
 

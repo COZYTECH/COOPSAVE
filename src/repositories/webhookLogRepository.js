@@ -115,10 +115,123 @@ const findFailedByOwnerId = async (ownerId, db = pool) => {
   return rows;
 };
 
+// Reconciliation logs follow the same group-admin boundary as transactions.
+const findMissingByManagerId = async (userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT
+        w.id,
+        w.request_id,
+        w.payload,
+        w.processed,
+        w.created_at,
+        ${accountRefExpression} AS account_ref,
+        m.id AS member_id,
+        m.full_name AS member_name,
+        c.name AS cooperative_name
+      FROM webhook_logs w
+      INNER JOIN members m ON m.account_ref = ${accountRefExpression}
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      LEFT JOIN transactions t ON t.request_id = w.request_id
+      WHERE (c.owner_id = :userId OR gm.role = 'GROUP_ADMIN')
+        AND t.id IS NULL
+        AND w.processed = 1
+      ORDER BY w.created_at DESC
+    `,
+    { userId }
+  );
+
+  return rows;
+};
+
+const findFailedByManagerId = async (userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT
+        w.id,
+        w.request_id,
+        w.payload,
+        w.processed,
+        w.created_at,
+        ${accountRefExpression} AS account_ref,
+        m.id AS member_id,
+        m.full_name AS member_name,
+        c.name AS cooperative_name
+      FROM webhook_logs w
+      INNER JOIN members m ON m.account_ref = ${accountRefExpression}
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE (c.owner_id = :userId OR gm.role = 'GROUP_ADMIN')
+        AND w.processed = 0
+      ORDER BY w.created_at DESC
+    `,
+    { userId }
+  );
+
+  return rows;
+};
+
+const findMissing = async (db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT
+        w.id,
+        w.request_id,
+        w.payload,
+        w.processed,
+        w.created_at,
+        ${accountRefExpression} AS account_ref,
+        m.id AS member_id,
+        m.full_name AS member_name,
+        c.name AS cooperative_name
+      FROM webhook_logs w
+      INNER JOIN members m ON m.account_ref = ${accountRefExpression}
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN transactions t ON t.request_id = w.request_id
+      WHERE t.id IS NULL
+        AND w.processed = 1
+      ORDER BY w.created_at DESC
+    `
+  );
+
+  return rows;
+};
+
+const findFailed = async (db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT
+        w.id,
+        w.request_id,
+        w.payload,
+        w.processed,
+        w.created_at,
+        ${accountRefExpression} AS account_ref,
+        m.id AS member_id,
+        m.full_name AS member_name,
+        c.name AS cooperative_name
+      FROM webhook_logs w
+      INNER JOIN members m ON m.account_ref = ${accountRefExpression}
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      WHERE w.processed = 0
+      ORDER BY w.created_at DESC
+    `
+  );
+
+  return rows;
+};
+
 module.exports = {
   create,
   findById,
   markProcessed,
   findMissingByOwnerId,
-  findFailedByOwnerId
+  findFailedByOwnerId,
+  findMissingByManagerId,
+  findFailedByManagerId,
+  findMissing,
+  findFailed
 };

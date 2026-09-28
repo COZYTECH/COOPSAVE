@@ -104,7 +104,9 @@ const create = async (
       accountRef,
       transactionReference,
       processingStatus,
-      rawPayload: JSON.stringify(rawPayload)
+      rawPayload: typeof rawPayload === 'string'
+        ? rawPayload
+        : JSON.stringify(rawPayload)
     }
   );
 

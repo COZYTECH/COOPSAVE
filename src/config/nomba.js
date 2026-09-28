@@ -13,7 +13,13 @@ const SENSITIVE_KEYS = new Set([
   'clientSecret',
   'signature',
   'secret',
-  'password'
+  'password',
+  'email',
+  'phone',
+  'phonenumber',
+  'account_number',
+  'accountnumber',
+  'account_name'
 ]);
 
 const redact = (value) => {
@@ -63,11 +69,13 @@ nombaClient.interceptors.request.use((config) => {
 
   logNombaEvent('info', 'nomba.request.started', {
     method: config.method,
-    baseURL: config.baseURL,
     url: config.url,
-    headers: config.headers,
-    params: config.params,
-    data: config.data
+    parameterKeys: config.params && typeof config.params === 'object'
+      ? Object.keys(config.params)
+      : [],
+    bodyKeys: config.data && typeof config.data === 'object'
+      ? Object.keys(config.data)
+      : []
   });
 
   return config;

@@ -1,9 +1,7 @@
-const nombaWebhookIngestionService = require("../services/nombaWebhookIngestionService");
+const nombaWebhookIngestionService = require('../services/nombaWebhookIngestionService');
 const asyncHandler = require("../utils/asyncHandler");
 
 const handleNombaWebhook = asyncHandler(async (req, res) => {
-  console.log("HEADERS");
-  console.log(req.headers);
   const signature = nombaWebhookIngestionService.getNombaSignature(req.headers);
 
   const result = await nombaWebhookIngestionService.ingestNombaWebhook({

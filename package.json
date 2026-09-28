@@ -10,7 +10,9 @@
     "db:migrate": "node scripts/migrate.js",
     "migrate": "node scripts/migrate.js",
     "migrate:rollback": "node scripts/migrateRollback.js",
-    "seed:railway": "node scripts/seedRailway.js"
+    "seed:railway": "node scripts/seedRailway.js",
+    "seed:platform-admin": "node scripts/seedPlatformAdmin.js",
+    "test": "node --test"
   },
   "keywords": [
     "coopsave",

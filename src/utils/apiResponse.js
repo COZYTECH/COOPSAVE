@@ -15,7 +15,7 @@ const success = (res, statusCode, message, data = null, meta = null) => {
   return res.status(statusCode).json(payload);
 };
 
-const error = (res, statusCode, message, errors = null) => {
+const error = (res, statusCode, message, errors = null, meta = {}) => {
   const payload = {
     success: false,
     message
@@ -23,6 +23,14 @@ const error = (res, statusCode, message, errors = null) => {
 
   if (errors !== null) {
     payload.errors = errors;
+  }
+
+  if (meta.code) {
+    payload.code = meta.code;
+  }
+
+  if (meta.requestId) {
+    payload.requestId = meta.requestId;
   }
 
   return res.status(statusCode).json(payload);

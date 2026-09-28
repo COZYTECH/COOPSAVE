@@ -10,10 +10,10 @@ export const FormField = ({
   children
 }) => {
   const baseClass =
-    'mt-1 h-10 w-full rounded-lg border border-ink/10 bg-white px-3 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15';
+    'pamoja-focus mt-1 min-h-11 w-full rounded-lg border border-pamoja-forest/16 bg-white px-3 text-sm text-pamoja-ink outline-none transition placeholder:text-pamoja-muted focus:border-pamoja-forest focus:ring-2 focus:ring-pamoja-forest/10';
 
   return (
-    <label className="block text-sm font-medium text-ink/75" htmlFor={id}>
+    <label className="block text-sm font-medium text-pamoja-body" htmlFor={id}>
       {label}
       {as === 'select' ? (
         <select
@@ -32,7 +32,7 @@ export const FormField = ({
           onChange={onChange}
           placeholder={placeholder}
           required={required}
-          className={`${baseClass} h-24 resize-none py-2`}
+          className={`${baseClass} min-h-24 resize-none py-2`}
         />
       ) : (
         <input

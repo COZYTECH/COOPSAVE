@@ -33,11 +33,11 @@ const toWebhookLog = (log) => ({
   createdAt: log.created_at
 });
 
-const getReconciliation = async (ownerId) => {
+const getReconciliation = async () => {
   const [transactions, missingWebhookLogs, failedWebhookLogs] = await Promise.all([
-    transactionRepository.findAllByOwnerId(ownerId),
-    webhookLogRepository.findMissingByOwnerId(ownerId),
-    webhookLogRepository.findFailedByOwnerId(ownerId)
+    transactionRepository.findAll(),
+    webhookLogRepository.findMissing(),
+    webhookLogRepository.findFailed()
   ]);
 
   const matchedTransactions = transactions.filter((transaction) =>

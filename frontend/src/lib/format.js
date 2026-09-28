@@ -1,7 +1,7 @@
-export const formatCurrency = (value) => {
+export const formatCurrency = (value, currency = 'NGN') => {
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
-    currency: 'NGN',
+    currency: String(currency || 'NGN').toUpperCase(),
     maximumFractionDigits: 2
   }).format(Number(value || 0));
 };

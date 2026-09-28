@@ -1,15 +1,15 @@
 const { pool } = require('../config/database');
 
 const cooperativeColumns = `
-  id,
-  name,
-  description,
-  owner_id,
-  created_at
+  c.id,
+  c.name,
+  c.description,
+  c.owner_id,
+  c.created_at
 `;
 
-const create = async ({ name, description = null, ownerId }) => {
-  const [result] = await pool.execute(
+const create = async ({ name, description = null, ownerId }, db = pool) => {
+  const [result] = await db.execute(
     `
       INSERT INTO cooperatives (name, description, owner_id)
       VALUES (:name, :description, :ownerId)
@@ -17,14 +17,14 @@ const create = async ({ name, description = null, ownerId }) => {
     { name, description, ownerId }
   );
 
-  return findById(result.insertId);
+  return findById(result.insertId, db);
 };
 
 const findAllByOwnerId = async (ownerId) => {
   const [rows] = await pool.execute(
     `
       SELECT ${cooperativeColumns}
-      FROM cooperatives
+      FROM cooperatives c
       WHERE owner_id = :ownerId
       ORDER BY created_at DESC
     `,
@@ -34,11 +34,28 @@ const findAllByOwnerId = async (ownerId) => {
   return rows;
 };
 
-const findById = async (id) => {
-  const [rows] = await pool.execute(
+// Return cooperatives the user owns or belongs to through the group role model.
+const findAllByUserId = async (userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT DISTINCT ${cooperativeColumns}
+      FROM cooperatives c
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE c.owner_id = :userId OR gm.user_id IS NOT NULL
+      ORDER BY c.created_at DESC
+    `,
+    { userId }
+  );
+
+  return rows;
+};
+
+const findById = async (id, db = pool) => {
+  const [rows] = await db.execute(
     `
       SELECT ${cooperativeColumns}
-      FROM cooperatives
+      FROM cooperatives c
       WHERE id = :id
       LIMIT 1
     `,
@@ -52,7 +69,7 @@ const findByIdAndOwnerId = async (id, ownerId, db = pool) => {
   const [rows] = await db.execute(
     `
       SELECT ${cooperativeColumns}
-      FROM cooperatives
+      FROM cooperatives c
       WHERE id = :id AND owner_id = :ownerId
       LIMIT 1
     `,
@@ -62,8 +79,44 @@ const findByIdAndOwnerId = async (id, ownerId, db = pool) => {
   return rows[0] || null;
 };
 
-const updateById = async (id, { name, description }) => {
-  await pool.execute(
+// Read access is available to any explicit group member or the legacy owner.
+const findByIdAndUserId = async (id, userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT DISTINCT ${cooperativeColumns}
+      FROM cooperatives c
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE c.id = :id
+        AND (c.owner_id = :userId OR gm.user_id IS NOT NULL)
+      LIMIT 1
+    `,
+    { id, userId }
+  );
+
+  return rows[0] || null;
+};
+
+// Management operations require ownership or the explicit GROUP_ADMIN role.
+const findByIdAndManagerId = async (id, userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT DISTINCT ${cooperativeColumns}
+      FROM cooperatives c
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE c.id = :id
+        AND (c.owner_id = :userId OR gm.role = 'GROUP_ADMIN')
+      LIMIT 1
+    `,
+    { id, userId }
+  );
+
+  return rows[0] || null;
+};
+
+const updateById = async (id, { name, description }, db = pool) => {
+  await db.execute(
     `
       UPDATE cooperatives
       SET
@@ -74,11 +127,11 @@ const updateById = async (id, { name, description }) => {
     { id, name: name || null, description: description || null }
   );
 
-  return findById(id);
+  return findById(id, db);
 };
 
-const deleteById = async (id) => {
-  const [result] = await pool.execute(
+const deleteById = async (id, db = pool) => {
+  const [result] = await db.execute(
     `
       DELETE FROM cooperatives
       WHERE id = :id
@@ -92,8 +145,11 @@ const deleteById = async (id) => {
 module.exports = {
   create,
   findAllByOwnerId,
+  findAllByUserId,
   findById,
   findByIdAndOwnerId,
+  findByIdAndUserId,
+  findByIdAndManagerId,
   updateById,
   deleteById
 };

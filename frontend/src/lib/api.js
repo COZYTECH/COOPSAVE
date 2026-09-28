@@ -29,15 +29,28 @@ api.interceptors.response.use(
       window.dispatchEvent(new Event('coopsave:unauthorized'));
     }
 
+    if (status === 429) {
+      error.rateLimited = true;
+      error.userMessage = 'Too many requests. Please wait a moment and try again.';
+    }
+
     return Promise.reject(error);
   }
 );
 
 export const getApiError = (error, fallback = 'Something went wrong.') => {
-  return (
-    error.response?.data?.message ||
-    error.response?.data?.errors?.[0]?.message ||
-    error.message ||
-    fallback
-  );
+  if (error?.response?.status === 429) {
+    return 'Too many requests. Please wait a moment and try again.';
+  }
+  const responseData = error?.response?.data;
+  if (typeof responseData?.message === 'string' && responseData.message.trim()) {
+    return responseData.message;
+  }
+
+  if (typeof responseData?.errors?.[0]?.message === 'string'
+    && responseData.errors[0].message.trim()) {
+    return responseData.errors[0].message;
+  }
+
+  return fallback;
 };

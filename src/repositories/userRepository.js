@@ -11,8 +11,8 @@ const userColumns = `
   updated_at
 `;
 
-const create = async ({ name, email, passwordHash }) => {
-  const [result] = await pool.execute(
+const create = async ({ name, email, passwordHash }, db = pool) => {
+  const [result] = await db.execute(
     `
       INSERT INTO users (name, email, password_hash)
       VALUES (:name, :email, :passwordHash)
@@ -20,11 +20,11 @@ const create = async ({ name, email, passwordHash }) => {
     { name, email, passwordHash }
   );
 
-  return findById(result.insertId);
+  return findById(result.insertId, db);
 };
 
-const findById = async (id) => {
-  const [rows] = await pool.execute(
+const findById = async (id, db = pool) => {
+  const [rows] = await db.execute(
     `
       SELECT ${userColumns}
       FROM users
@@ -37,8 +37,8 @@ const findById = async (id) => {
   return rows[0] || null;
 };
 
-const findByEmail = async (email) => {
-  const [rows] = await pool.execute(
+const findByEmail = async (email, db = pool) => {
+  const [rows] = await db.execute(
     `
       SELECT ${userColumns}
       FROM users

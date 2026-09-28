@@ -311,12 +311,6 @@ const processNombaWebhook = async ({ rawPayload, signature }) => {
 //   );
 // };
 const getNombaSignature = (headers) => {
-  console.log("ALL HEADERS");
-  console.dir(headers);
-
-  console.log("nomba-signature =", headers["nomba-signature"]);
-  console.log("x-nomba-signature =", headers["x-nomba-signature"]);
-
   return (
     headers[env.nomba.webhookSignatureHeader] ||
     headers["nomba-signature"] ||

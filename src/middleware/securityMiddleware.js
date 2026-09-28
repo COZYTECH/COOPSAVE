@@ -1,6 +1,5 @@
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const env = require('../config/env');
 
 const developmentOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
@@ -22,17 +21,7 @@ const corsOptions = {
 
 const securityMiddleware = [
   helmet(),
-  cors(corsOptions),
-  rateLimit({
-    windowMs: env.rateLimit.windowMs,
-    max: env.rateLimit.max,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-      success: false,
-      message: 'Too many requests. Please try again later.'
-    }
-  })
+  cors(corsOptions)
 ];
 
 module.exports = securityMiddleware;

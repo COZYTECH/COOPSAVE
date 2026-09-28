@@ -1,31 +1,24 @@
 import { NavLink } from 'react-router-dom';
 import {
-  BadgeDollarSign,
   Building2,
   LayoutDashboard,
-  RefreshCcw,
   Users,
   X
 } from 'lucide-react';
+import { Logo } from '../landing/LandingPrimitives.jsx';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Cooperatives', href: '/cooperatives', icon: Building2 },
-  { label: 'Members', href: '/members', icon: Users },
-  { label: 'Reconciliation', href: '/reconciliation', icon: RefreshCcw }
+  { label: 'Groups', href: '/cooperatives', icon: Building2 },
+  { label: 'Members', href: '/members', icon: Users }
 ];
 
 const SidebarContent = ({ onClose }) => (
-  <div className="flex h-full flex-col border-r border-ink/10 bg-white">
-    <div className="flex h-16 items-center justify-between px-5">
-      <div className="flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-lg bg-moss text-white">
-          <BadgeDollarSign className="h-5 w-5" aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-sm font-bold uppercase text-moss">CoopSave</p>
-          <p className="text-xs text-ink/55">Cooperative banking</p>
-        </div>
+  <div className="flex h-full flex-col border-r border-ink/10 bg-white shadow-pamoja-soft">
+      <div className="flex h-16 items-center justify-between px-5">
+      <div>
+        <Logo />
+        <p className="mt-1 pl-10 text-xs text-ink/55">Community finance</p>
       </div>
       <button
         type="button"
@@ -64,8 +57,8 @@ const SidebarContent = ({ onClose }) => (
 
     <div className="border-t border-ink/10 p-4">
       <div className="rounded-lg bg-paper p-3">
-        <p className="text-xs font-semibold uppercase text-ink/45">Settlement</p>
-        <p className="mt-1 text-sm font-semibold text-ink">Nomba connected</p>
+        <p className="text-xs font-semibold uppercase text-ink/45">Payment provider</p>
+        <p className="mt-1 text-sm font-semibold text-ink">Flutterwave test mode</p>
       </div>
     </div>
   </div>

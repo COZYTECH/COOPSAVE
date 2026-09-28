@@ -6,10 +6,11 @@ const {
   updateMemberValidator,
   memberIdValidator
 } = require('../validators/memberValidators');
+const { authenticatedApiLimiter } = require('../middleware/rateLimitMiddleware');
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(authenticate, authenticatedApiLimiter);
 
 router.post('/', createMemberValidator, memberController.createMember);
 router.get('/', memberController.getMembers);

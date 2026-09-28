@@ -226,18 +226,27 @@ const getNombaSignature = (headers) => {
   );
 };
 
+// console.log("========== REAL WEBHOOK ==========");
+// console.log("Headers:");
+// console.dir(req.headers, { depth: null });
+
+// console.log("Raw Body:");
+// console.log(req.body.toString("utf8"));
+
+// console.log("=================================");
+
 const ingestNombaWebhook = async ({ rawPayload, signature }) => {
   logWebhookEvent("nomba.webhook.received", {
     signaturePresent: Boolean(signature),
   });
 
   // uncommenting this during production will enable signature verification for Nomba webhooks
-  // const isValidSignature = nombaService.verifyWebhookSignature(
-  //   rawPayload,
-  //   signature
-  // );
+  const isValidSignature = nombaService.verifyWebhookSignature(
+    rawPayload,
+    signature,
+  );
 
-  const isValidSignature = true;
+  //const isValidSignature = true;
 
   if (!isValidSignature) {
     logWebhookEvent("nomba.webhook.invalid_signature");

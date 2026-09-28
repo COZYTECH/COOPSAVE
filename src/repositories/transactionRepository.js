@@ -135,10 +135,72 @@ const findAllByOwnerId = async (ownerId, db = pool) => {
   return rows;
 };
 
+// Reconciliation is group-scoped: owners and explicit group administrators can review it.
+const findAllByManagerId = async (userId, db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT
+        t.id,
+        t.request_id,
+        t.transaction_id,
+        t.member_id,
+        t.amount,
+        t.sender_name,
+        t.narration,
+        t.event_type,
+        t.status,
+        t.created_at,
+        m.full_name AS member_name,
+        m.account_ref,
+        c.name AS cooperative_name
+      FROM transactions t
+      INNER JOIN members m ON m.id = t.member_id
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      LEFT JOIN cooperative_memberships gm
+        ON gm.cooperative_id = c.id AND gm.user_id = :userId
+      WHERE c.owner_id = :userId OR gm.role = 'GROUP_ADMIN'
+      ORDER BY t.created_at DESC
+    `,
+    { userId }
+  );
+
+  return rows;
+};
+
+// Platform reconciliation intentionally has no group-owner filter.
+const findAll = async (db = pool) => {
+  const [rows] = await db.execute(
+    `
+      SELECT
+        t.id,
+        t.request_id,
+        t.transaction_id,
+        t.member_id,
+        t.amount,
+        t.sender_name,
+        t.narration,
+        t.event_type,
+        t.status,
+        t.created_at,
+        m.full_name AS member_name,
+        m.account_ref,
+        c.name AS cooperative_name
+      FROM transactions t
+      INNER JOIN members m ON m.id = t.member_id
+      INNER JOIN cooperatives c ON c.id = m.cooperative_id
+      ORDER BY t.created_at DESC
+    `
+  );
+
+  return rows;
+};
+
 module.exports = {
   create,
   findById,
   findByRequestId,
   findByTransactionReference,
-  findAllByOwnerId
+  findAllByOwnerId,
+  findAllByManagerId,
+  findAll
 };
